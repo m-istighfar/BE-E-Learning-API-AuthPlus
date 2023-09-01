@@ -23,10 +23,8 @@ app.use(cors());
 const openApiPath = "doc/openapi.yaml";
 const file = fs.readFileSync(openApiPath, "utf8");
 const swaggerDocument = yaml.parse(file);
-
-app.use(databaseMiddleware);
-
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+app.use(databaseMiddleware);
 
 app.use("/auth", authRoutes);
 app.use(
