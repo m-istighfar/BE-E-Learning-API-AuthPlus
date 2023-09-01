@@ -4,6 +4,10 @@
 
 This is a simple e-learning platform API built with Node.js and Express, focusing on providing different functionalities for users with different roles, such as Admin, Author, and Student. The application offers features like user authentication and authorization, course management, learning path management, and a feature-rich dashboard for admins, authors, and students.
 
+## Deployment
+
+This project is deployed on Cyclic. You can access the API at [https://inquisitive-outerwear.cyclic.app/api-docs/](https://inquisitive-outerwear.cyclic.app/api-docs/).
+
 ## Table of Contents
 
 - [Overview](#overview)
