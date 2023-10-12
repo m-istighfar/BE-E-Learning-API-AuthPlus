@@ -3,8 +3,8 @@ info:
   title: Simple e-learning platform API
   version: 1.0.0
 servers:
-  - url: https://inquisitive-outerwear.cyclic.app/
-    description: Production server
+  # - url: https://inquisitive-outerwear.cyclic.app/
+  #   description: Production server
   - url: http://localhost:3000
     description: Development server
 

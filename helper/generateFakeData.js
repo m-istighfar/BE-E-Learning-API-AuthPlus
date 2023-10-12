@@ -11,13 +11,10 @@ const clearDatabase = require("./clearDatabase");
 
 async function generateFakeData() {
   try {
-    await mongoose.connect(
-      "mongodb://mongo:zR6zyrFlpxU6sLFz5oPv@containers-us-west-90.railway.app:7854",
-      {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-      }
-    );
+    await mongoose.connect("mongodb://127.0.0.1:27017/week16", {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
 
     await clearDatabase();
 
