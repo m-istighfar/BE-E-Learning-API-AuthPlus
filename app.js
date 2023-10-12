@@ -2,6 +2,7 @@ require("dotenv").config();
 
 const express = require("express");
 const bodyParser = require("body-parser");
+const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const swaggerUi = require("swagger-ui-express");
 const yaml = require("yaml");
@@ -19,6 +20,7 @@ const studentRoutes = require("./routes/studentRoutes");
 const app = express();
 app.use(bodyParser.json());
 app.use(cors());
+app.use(cookieParser());
 
 const openApiPath = "doc/openapi.yaml";
 const file = fs.readFileSync(openApiPath, "utf8");

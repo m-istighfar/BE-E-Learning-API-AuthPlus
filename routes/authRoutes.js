@@ -16,8 +16,11 @@ const loginLimiter = rateLimit({
   message: "Too many failed login attempts, please try again after 15 minutes.",
 });
 router.post("/login", loginLimiter, AuthController.login);
+router.post("/login-session", loginLimiter, AuthController.loginWihSession);
 
 router.post("/register", AuthController.register);
 router.post("/refreshToken", AuthController.refreshTokenHandler);
+
+router.post("/logout-session", AuthController.logoutWithSession);
 
 module.exports = router;

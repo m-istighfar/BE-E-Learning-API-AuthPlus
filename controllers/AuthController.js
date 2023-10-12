@@ -87,6 +87,59 @@ const login = async (req, res) => {
   }
 };
 
+const loginWihSession = async (req, res) => {
+  const { username, password } = req.body;
+
+  try {
+    const existingUser = await User.findOne({ username });
+    if (!existingUser)
+      return res.status(400).json({ error: "User does not exist" });
+
+    const isPasswordCorrect = await bcrypt.compare(
+      password,
+      existingUser.password
+    );
+
+    if (isPasswordCorrect) {
+      const accessToken = jwt.sign(
+        {
+          username: existingUser.username,
+          id: existingUser._id,
+          role: existingUser.role,
+        },
+        JWT_SIGN,
+        { expiresIn: ACCESS_TOKEN_EXPIRATION }
+      );
+
+      // Generate refresh token
+      const refreshToken = jwt.sign(
+        {
+          username: existingUser.username,
+          id: existingUser._id,
+          role: existingUser.role,
+        },
+        JWT_REFRESH_SIGN,
+        { expiresIn: REFRESH_TOKEN_EXPIRATION }
+      );
+
+      res.cookie("accessToken", accessToken, {
+        httpOnly: true,
+        maxAge: 60 * 60 * 1000, // 1 hour
+      });
+
+      res.cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      });
+      res.status(200).json({ message: "Login successful" });
+    } else {
+      res.status(400).json({ error: "Password is incorrect" });
+    }
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
 const refreshTokenHandler = async (req, res) => {
   const { refreshToken } = req.body;
 
@@ -120,8 +173,16 @@ const refreshTokenHandler = async (req, res) => {
   });
 };
 
+const logoutWithSession = (req, res) => {
+  res.clearCookie("accessToken");
+  res.clearCookie("refreshToken");
+  res.status(200).json({ message: "Logged out successfully" });
+};
+
 module.exports = {
   register,
   login,
   refreshTokenHandler,
+  loginWihSession,
+  logoutWithSession,
 };
