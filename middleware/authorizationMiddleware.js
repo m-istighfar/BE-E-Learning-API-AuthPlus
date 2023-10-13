@@ -5,12 +5,9 @@ const authorizationMiddleware = (allowedRoles) => {
   return (req, res, next) => {
     let token;
 
-    // First, check for token in cookies
     if (req.cookies.accessToken) {
       token = req.cookies.accessToken;
-    }
-    // If not found in cookies, fall back to the Authorization header
-    else if (req.headers.authorization) {
+    } else if (req.headers.authorization) {
       token = req.headers.authorization.split(" ")[1];
     }
 

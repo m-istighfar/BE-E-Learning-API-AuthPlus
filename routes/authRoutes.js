@@ -2,6 +2,8 @@ const express = require("express");
 const router = express.Router();
 const AuthController = require("../controllers/AuthController");
 const PasswordResetController = require("../controllers/PasswordResetController");
+const cache = require("memory-cache");
+
 const { rateLimit } = require("express-rate-limit");
 
 const UserRateLimitStore = require("../routes/UserRateLimitStore");
@@ -61,6 +63,11 @@ router.post("/rate-limit-reset/:key", async (req, res) => {
 router.post("/rate-limit-reset-all", (req, res) => {
   userRateLimitStoreInstance.resetAll();
   res.send({ message: "All rate limits reset" });
+});
+
+router.get("/cache-data", (req, res) => {
+  const cacheObject = JSON.parse(cache.exportJson());
+  res.json(cacheObject);
 });
 
 module.exports = router;

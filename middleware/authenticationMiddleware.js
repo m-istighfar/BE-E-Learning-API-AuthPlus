@@ -1,20 +1,26 @@
 const jwt = require("jsonwebtoken");
 const { JWT_SIGN } = require("../config/jwt.js");
+const cache = require("memory-cache");
+
+const checkRevokedToken = (token) => {
+  return cache.get(token) === true;
+};
 
 const authenticationMiddleware = (req, res, next) => {
   let token;
 
-  // First, check for token in cookies
   if (req.cookies.accessToken) {
     token = req.cookies.accessToken;
-  }
-  // If not found in cookies, fall back to the Authorization header
-  else if (req.headers.authorization) {
+  } else if (req.headers.authorization) {
     token = req.headers.authorization.split(" ")[1];
   }
 
   if (!token) {
     return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  if (checkRevokedToken(token)) {
+    return res.status(401).json({ error: "Token has been revoked" });
   }
 
   try {

@@ -1,7 +1,7 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../models/user");
-
+const cache = require("memory-cache");
 const {
   JWT_SIGN,
   JWT_REFRESH_SIGN,
@@ -61,7 +61,6 @@ const login = async (req, res) => {
         { expiresIn: ACCESS_TOKEN_EXPIRATION }
       );
 
-      // Generate refresh token
       const refreshToken = jwt.sign(
         {
           username: existingUser.username,
@@ -111,7 +110,6 @@ const loginWihSession = async (req, res) => {
         { expiresIn: ACCESS_TOKEN_EXPIRATION }
       );
 
-      // Generate refresh token
       const refreshToken = jwt.sign(
         {
           username: existingUser.username,
@@ -124,14 +122,20 @@ const loginWihSession = async (req, res) => {
 
       res.cookie("accessToken", accessToken, {
         httpOnly: true,
-        maxAge: 60 * 60 * 1000, // 1 hour
+        maxAge: 60 * 60 * 1000,
       });
 
       res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        maxAge: 7 * 24 * 60 * 60 * 1000,
       });
-      res.status(200).json({ message: "Login successful" });
+      res.status(200).json({
+        message: "Login successful",
+        accessToken,
+        refreshToken,
+        accessTokenExp: ACCESS_TOKEN_EXPIRATION,
+        refreshTokenExp: REFRESH_TOKEN_EXPIRATION,
+      });
     } else {
       res.status(400).json({ error: "Password is incorrect" });
     }
@@ -160,7 +164,6 @@ const refreshTokenHandler = async (req, res) => {
     return res.status(404).json({ error: "User not found" });
   }
 
-  // Generate a new access token
   const accessToken = jwt.sign(
     { username: user.username, id: user._id, role: user.role },
     JWT_SIGN,
@@ -174,6 +177,17 @@ const refreshTokenHandler = async (req, res) => {
 };
 
 const logoutWithSession = (req, res) => {
+  let accessToken = req.cookies["accessToken"];
+
+  if (!accessToken && req.headers.authorization) {
+    accessToken = req.headers.authorization.split(" ")[1];
+  }
+
+  if (accessToken) {
+    const expiresIn = jwt.decode(accessToken).exp * 1000 - Date.now();
+    cache.put(accessToken, true, expiresIn);
+  }
+
   res.clearCookie("accessToken");
   res.clearCookie("refreshToken");
   res.status(200).json({ message: "Logged out successfully" });
