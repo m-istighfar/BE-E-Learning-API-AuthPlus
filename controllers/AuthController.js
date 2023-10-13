@@ -23,21 +23,18 @@ passport.use(
       callbackURL: process.env.GOOGLE_CALLBACK_URL,
     },
     async (accessToken, refreshToken, profile, done) => {
-      // Check if user exists in your database
       const existingUser = await User.findOne({ googleId: profile.id });
 
       if (existingUser) {
         return done(null, existingUser);
       }
 
-      // If not, create a new user
       const newUser = new User({
         googleId: profile.id,
-        username: profile.displayName, // or any field you'd like
-        email: profile.emails[0].value, // Google can return multiple emails
+        username: profile.displayName,
+        email: profile.emails[0].value,
         role: "student",
         verified: true,
-        // ... add any other details you need
       });
       await newUser.save();
 
@@ -54,8 +51,6 @@ passport.deserializeUser(async (id, done) => {
   const user = await User.findById(id);
   done(null, user);
 });
-
-// ----------------------------------------------------------------------------------------//
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -119,7 +114,7 @@ const verifyEmail = async (req, res) => {
   }
 
   user.verified = true;
-  user.verificationToken = undefined; // Clear the token after verification
+  user.verificationToken = undefined;
   await user.save();
 
   res.status(200).json({ message: "Email verified successfully!" });

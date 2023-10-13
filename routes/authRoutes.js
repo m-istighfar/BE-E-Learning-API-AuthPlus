@@ -87,20 +87,15 @@ router.get(
     failureRedirect: "/login",
   }),
   (req, res) => {
-    // User is authenticated with Google at this point
-
-    // Now, generate a JWT token for the user with their role and other details
     const tokenPayload = {
-      id: req.user.id, // Assuming user object has an ID
-      role: req.user.role, // Assuming user object has a role
-      // Add any other required fields
+      id: req.user.id,
+      role: req.user.role,
     };
 
-    const token = jwt.sign(tokenPayload, JWT_SIGN, { expiresIn: "1h" }); // Example: Token expires in 1 hour
+    const token = jwt.sign(tokenPayload, JWT_SIGN, { expiresIn: "1h" });
 
-    // Store the token in a cookie or send it in the response
     res.cookie("accessToken", token, { httpOnly: true });
-    res.redirect("/success"); // Redirect to home or wherever you want
+    res.redirect("/success");
   }
 );
 

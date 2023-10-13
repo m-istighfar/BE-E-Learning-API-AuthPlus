@@ -25,10 +25,10 @@ app.use(cors());
 app.use(cookieParser());
 app.use(
   session({
-    secret: "your_secret_key", // This should be a long random string
+    secret: "secretKey",
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: false }, // Set to true if you're using HTTPS
+    cookie: { secure: false },
   })
 );
 
