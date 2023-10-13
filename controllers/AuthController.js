@@ -4,6 +4,9 @@ const User = require("../models/user");
 const cache = require("memory-cache");
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
+require("dotenv").config();
+const passport = require("passport");
+const GoogleStrategy = require("passport-google-oauth20").Strategy;
 
 const {
   JWT_SIGN,
@@ -11,6 +14,48 @@ const {
   ACCESS_TOKEN_EXPIRATION,
   REFRESH_TOKEN_EXPIRATION,
 } = require("../config/jwt");
+
+passport.use(
+  new GoogleStrategy(
+    {
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: process.env.GOOGLE_CALLBACK_URL,
+    },
+    async (accessToken, refreshToken, profile, done) => {
+      // Check if user exists in your database
+      const existingUser = await User.findOne({ googleId: profile.id });
+
+      if (existingUser) {
+        return done(null, existingUser);
+      }
+
+      // If not, create a new user
+      const newUser = new User({
+        googleId: profile.id,
+        username: profile.displayName, // or any field you'd like
+        email: profile.emails[0].value, // Google can return multiple emails
+        role: "student",
+        verified: true,
+        // ... add any other details you need
+      });
+      await newUser.save();
+
+      done(null, newUser);
+    }
+  )
+);
+
+passport.serializeUser((user, done) => {
+  done(null, user.id);
+});
+
+passport.deserializeUser(async (id, done) => {
+  const user = await User.findById(id);
+  done(null, user);
+});
+
+// ----------------------------------------------------------------------------------------//
 
 const transporter = nodemailer.createTransport({
   service: "gmail",

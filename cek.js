@@ -54,17 +54,40 @@ const port = process.env.PORT;
 app.listen(port, () => console.log(`Listening on port ${port}...`));
 
 // authController
-
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../models/user");
 const cache = require("memory-cache");
+const nodemailer = require("nodemailer");
+const crypto = require("crypto");
+
 const {
   JWT_SIGN,
   JWT_REFRESH_SIGN,
   ACCESS_TOKEN_EXPIRATION,
   REFRESH_TOKEN_EXPIRATION,
 } = require("../config/jwt");
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: "daiqijb105@gmail.com",
+    pass: "elrvbtfvypzvosdr",
+  },
+});
+
+const sendVerificationEmail = async (email, token) => {
+  const verificationLink = `http://localhost:3000/auth/verify-email/${token}`;
+
+  const mailOptions = {
+    from: "daiqijb105@gmail.com",
+    to: email,
+    subject: "Email Verification",
+    text: `Click on the link to verify your email: ${verificationLink}`,
+  };
+
+  await transporter.sendMail(mailOptions);
+};
 
 const register = async (req, res) => {
   const { username, email, password, role } = req.body;
@@ -74,6 +97,7 @@ const register = async (req, res) => {
     return res.status(400).json({ error: "User already exists" });
 
   try {
+    const verificationToken = crypto.randomBytes(32).toString("hex");
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const newUser = new User({
@@ -81,9 +105,12 @@ const register = async (req, res) => {
       email,
       password: hashedPassword,
       role,
+      verificationToken,
     });
 
     await newUser.save();
+
+    await sendVerificationEmail(newUser.email, verificationToken);
 
     res.status(200).json({
       message: "User successfully registered",
@@ -94,6 +121,21 @@ const register = async (req, res) => {
   }
 };
 
+const verifyEmail = async (req, res) => {
+  const { token } = req.params;
+
+  const user = await User.findOne({ verificationToken: token });
+  if (!user) {
+    return res.status(400).json({ error: "Invalid verification token." });
+  }
+
+  user.verified = true;
+  user.verificationToken = undefined; // Clear the token after verification
+  await user.save();
+
+  res.status(200).json({ message: "Email verified successfully!" });
+};
+
 const login = async (req, res) => {
   const { username, password } = req.body;
 
@@ -101,6 +143,11 @@ const login = async (req, res) => {
     const existingUser = await User.findOne({ username });
     if (!existingUser)
       return res.status(400).json({ error: "User does not exist" });
+
+    if (!existingUser.verified)
+      return res.status(400).json({
+        error: "Email not verified. Please verify your email first.",
+      });
 
     const isPasswordCorrect = await bcrypt.compare(
       password,
@@ -150,6 +197,11 @@ const loginWihSession = async (req, res) => {
     const existingUser = await User.findOne({ username });
     if (!existingUser)
       return res.status(400).json({ error: "User does not exist" });
+
+    if (!existingUser.verified)
+      return res.status(400).json({
+        error: "Email not verified. Please verify your email first.",
+      });
 
     const isPasswordCorrect = await bcrypt.compare(
       password,
@@ -252,13 +304,14 @@ const logoutWithSession = (req, res) => {
 
 module.exports = {
   register,
+  verifyEmail,
   login,
   refreshTokenHandler,
   loginWihSession,
   logoutWithSession,
 };
 
-// authRoutes
+// authRoutes.js
 
 const express = require("express");
 const router = express.Router();
@@ -291,6 +344,7 @@ router.post("/login", userLoginLimiter, AuthController.login);
 router.post("/login-session", userLoginLimiter, AuthController.loginWihSession);
 
 router.post("/register", AuthController.register);
+router.get("/verify-email/:token", AuthController.verifyEmail);
 router.post("/refreshToken", AuthController.refreshTokenHandler);
 
 router.post("/logout-session", AuthController.logoutWithSession);
@@ -333,3 +387,28 @@ router.get("/cache-data", (req, res) => {
 });
 
 module.exports = router;
+
+// user model
+
+const mongoose = require("mongoose");
+
+const UserSchema = new mongoose.Schema({
+  username: { type: String, unique: true, required: true },
+  email: { type: String, unique: true, required: true },
+  password: { type: String, required: true },
+  role: { type: String, required: true, enum: ["admin", "author", "student"] },
+  resetPasswordToken: String,
+  resetPasswordExpires: Date,
+  verified: { type: Boolean, default: false },
+  verificationToken: String,
+});
+
+module.exports = mongoose.model("User", UserSchema);
+
+// .env
+
+JWT_SIGN = your - access - token - secret - key;
+JWT_REFRESH_SIGN = your - refresh - token - secret - key;
+ACCESS_TOKEN_EXPIRATION = "10m";
+REFRESH_TOKEN_EXPIRATION = "7d";
+PORT = 3000;

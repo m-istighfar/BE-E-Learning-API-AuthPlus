@@ -3,6 +3,9 @@ const router = express.Router();
 const AuthController = require("../controllers/AuthController");
 const PasswordResetController = require("../controllers/PasswordResetController");
 const cache = require("memory-cache");
+const passport = require("passport");
+const jwt = require("jsonwebtoken");
+const { JWT_SIGN } = require("../config/jwt");
 
 const { rateLimit } = require("express-rate-limit");
 
@@ -70,5 +73,35 @@ router.get("/cache-data", (req, res) => {
   const cacheObject = JSON.parse(cache.exportJson());
   res.json(cacheObject);
 });
+
+router.get(
+  "/google",
+  passport.authenticate("google", {
+    scope: ["profile", "email"],
+  })
+);
+
+router.get(
+  "/google/callback",
+  passport.authenticate("google", {
+    failureRedirect: "/login",
+  }),
+  (req, res) => {
+    // User is authenticated with Google at this point
+
+    // Now, generate a JWT token for the user with their role and other details
+    const tokenPayload = {
+      id: req.user.id, // Assuming user object has an ID
+      role: req.user.role, // Assuming user object has a role
+      // Add any other required fields
+    };
+
+    const token = jwt.sign(tokenPayload, JWT_SIGN, { expiresIn: "1h" }); // Example: Token expires in 1 hour
+
+    // Store the token in a cookie or send it in the response
+    res.cookie("accessToken", token, { httpOnly: true });
+    res.redirect("/success"); // Redirect to home or wherever you want
+  }
+);
 
 module.exports = router;
