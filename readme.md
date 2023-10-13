@@ -4,9 +4,6 @@
 
 This is a simple e-learning platform API built with Node.js and Express, focusing on providing different functionalities for users with different roles, such as Admin, Author, and Student. The application offers features like user authentication and authorization, course management, learning path management, and a feature-rich dashboard for admins, authors, and students.
 
-## Deployment
-
-This project is deployed on Cyclic. You can access the API at [https://inquisitive-outerwear.cyclic.app/api-docs/](https://inquisitive-outerwear.cyclic.app/api-docs/).
 
 ## Table of Contents
 
@@ -23,6 +20,21 @@ This project is deployed on Cyclic. You can access the API at [https://inquisiti
 - [License](#license)
 
 ## Key Features
+
+### General
+
+- **JWT-based Authentication**: Securely authenticate users via JWT.
+- **Role-based Authorization**: Middleware to enable role-based access.
+- **API Documentation**: Swagger UI for API documentation.
+- **Login & Logout Routes**: Users can log in, receive tokens and refresh tokens, and also log out, which clears the session.
+- **Login Session Management**: The application maintains user sessions and handles tokens using cookies.
+- **Account Security Features**:
+  - **Password Reset**: If users forget their password, they can request a reset link and update their password following best practices.
+  - **Login Limitation**: To prevent brute force attacks, after 5 failed login attempts, the response is negative.
+  - **Account Lockout**: After 5 failed login attempts, the user's account (identified by email/username) will be locked out for a specific duration, regardless of the IP address used.
+  - **Blacklisted Tokens**: Access tokens can be blacklisted to revoke their validity. This ensures that upon logout, the token is immediately invalidated.
+  - **Middleware Checks**: Middleware will verify if an access token is revoked and will deny authentication accordingly.
+  - **Google SSO**: Users have the option to sign up and sign in using Google's Single Sign-On (SSO) feature.
 
 ### For Administrators
 
@@ -54,116 +66,43 @@ This project is deployed on Cyclic. You can access the API at [https://inquisiti
 
   **Note**: Students can only see enrollments that have been accepted and have the option to unenroll.
 
-### Additional Features
 
-- **Secure Authentication**: JWT-based authentication.
-- **Role-based Authorization**: Middleware to enable role-based access.
-- **API Documentation**: Swagger UI for API documentation.
 
 ## Tech Stack
 
-- **Node.js**: Backend runtime.
-- **Express.js**: Web application framework.
-- **MongoDB**: NoSQL database used for storing data.
-- **YAML**: For Swagger API documentation.
-- **Swagger-UI-Express**: For rendering API documentation.
-- **JSON Web Token (JWT)**: For authentication.
-- **dotenv**: For environment variable management.quest.
+**Server & Middleware:**
+1. **express (v4.18.2)**: A web application framework for Node.js, used for building web apps and APIs.
+2. **body-parser (v1.20.2)**: Middleware to parse incoming request bodies. This has been part of Express.js itself for some time and is no longer necessary as a separate dependency.
+3. **cookie-parser (v1.4.6)**: Middleware to parse cookies.
+4. **cors (v2.8.5)**: Middleware to enable CORS (Cross-Origin Resource Sharing).
 
-## Database Setup and Schema
+**View Engine:**
+1. **ejs (v3.1.9)**: A templating engine for rendering views in Express.js.
 
-### Database Setup
+**Authentication & Security:**
+1. **bcrypt (v5.1.1)**: For hashing passwords.
+2. **jsonwebtoken (v9.0.1)**: For generating and validating JSON web tokens.
+3. **passport (v0.6.0)**: Authentication middleware.
+4. **passport-google-oauth20 (v2.0.0)**: Passport strategy for authenticating with Google using OAuth 2.0.
+5. **express-session (v1.17.3)**: For managing user sessions.
+6. **express-rate-limit (v7.1.1)**: Rate limiter to protect your application from brute-force attacks.
 
-1. **Install MongoDB**: If you haven't installed MongoDB, you can follow the [official MongoDB installation guide](https://docs.mongodb.com/manual/installation/).
+**Database & Caching:**
+1. **mongoose (v7.4.5)**: ORM for MongoDB, allowing for easy integration with your Express.js application.
+2. **memory-cache (v0.2.0)**: A simple in-memory cache.
 
-2. **Connection**: The connection string is specified in the `.env` file under `MONGO_URI`.
+**Email Service:**
+1. **nodemailer (v6.9.6)**: Send emails with Node.js.
 
-### Schema
+**Utilities & Misc:**
+1. **crypto (v1.0.1)**: Core module in Node.js for cryptographic functionality. Note that you might not need this as an explicit dependency since it's a built-in module in Node.js.
+2. **dotenv (v16.3.1)**: Loads environment variables from a `.env` file.
+3. **faker (v5.5.3)**: For generating fake data.
+4. **swagger-ui-express (v5.0.0)**: Allows you to serve the Swagger UI, which lets you visualize and interact with your API’s resources.
+5. **yaml (v2.3.2)**: For working with YAML data format.
 
-<!-- images -->
-
-![Database Schema](./asset/images/db%20schema.png)
-
-#### User Collection (UserSchema)
-
-- `username`: String (unique, required)
-- `email`: String (unique, required)
-- `password`: String (required)
-- `role`: String (required, one of "admin", "author", "student")
-
-#### Course Collection (CourseSchema)
-
-- `title`: String
-- `description`: String
-- `thumbnail`: String
-- `authorId`: ObjectID (reference to User collection, required)
-- `creationDate`: Date
-- `reviews`: Array of ReviewSchema
-  - `studentId`: ObjectID (reference to User collection, required)
-  - `rating`: Number
-  - `review`: String
-- `ratingAverage`: Number (default 0)
-
-#### Review Collection (Embedded in CourseSchema)
-
-- `studentId`: ObjectID (reference to User collection, required)
-- `rating`: Number
-- `review`: String
-
-#### Enrollment Collection (EnrollmentSchema)
-
-- `courseId`: ObjectID (reference to Course collection, required)
-- `studentId`: ObjectID (reference to User collection, required)
-- `status`: String (one of "accepted", "rejected", "pending")
-
-#### Learning Path Collection (learningPathSchema)
-
-- `title`: String
-- `description`: String
-- `courses`: Array of ObjectIDs (reference to Course collection)
-
-#### Progress Collection (ProgressSchema)
-
-- `studentId`: ObjectID (reference to User collection, required)
-- `courseId`: ObjectID (reference to Course collection, required)
-- `completion`: Number (default 0)
-
-## Database Relationships
-
-The Learning Platform API utilizes MongoDB, a NoSQL database, to store its data. Despite being a NoSQL database, relationships between the data are maintained through references. Here are the primary relationships:
-
-### User and Course
-
-- A `User` can be an `author` of multiple `Courses`.
-- A `Course` has one `author`, represented by `authorId` in the `Course` collection, which refers back to a `User`.
-
-### Course and Review
-
-- A `Course` can have multiple `Reviews`.
-- Each `Review` is associated with one `Course` and one `Student` (`User` with a role of "student").
-- Reviews are embedded within the `Course` document as an array of `ReviewSchema`.
-
-### User and Review
-
-- A `User` with a role of "student" can write multiple `Reviews`.
-- Each `Review` is specifically associated with a `Student` via `studentId`.
-
-### Enrollment and User
-
-- An `Enrollment` is a relationship between a `Course` and a `User` (with a role of "student").
-- A `User` can have multiple `Enrollments`.
-- Each `Enrollment` contains a `studentId` and `courseId` to indicate the relationship.
-
-### Learning Path and Course
-
-- A `Learning Path` can contain multiple `Courses`.
-- Each `Course` can be part of multiple `Learning Paths`.
-- The `Learning Path` collection has an array field `courses` that stores ObjectIDs referring to `Courses`.
-
-### User and Progress
-
-- A `Progress` document tracks the learning progress of a `User` in a particular `Course`.
-- `Progress` is linked to `User` via `studentId` and to `Course` via `courseId`.
+**Development Dependencies:**
+1. **@faker-js/faker (v8.0.2)**: This seems to be a newer version or a different package of faker. You might want to consolidate to one version/package.
 
 ## Installation
 
@@ -192,7 +131,13 @@ Create a `.env` file:
 ```env
 PORT=3000
 DATABASE_URL=mongodb://localhost:27017/learning_platform
-JWT_SECRET=mysecret
+JWT_SIGN=your-access-token-secret-key
+JWT_REFRESH_SIGN=your-refresh-token-secret-key
+ACCESS_TOKEN_EXPIRATION="10m"
+REFRESH_TOKEN_EXPIRATION="7d"
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+GOOGLE_CALLBACK_URL=http://localhost:3000/auth/google/callback
 ```
 
 ### Step 5: Start the Server
@@ -243,10 +188,23 @@ node .\helper\generateFakeData.js
 
 ### **Authentication Endpoints**
 
-| Method | Endpoint         | Description       |
-| ------ | ---------------- | ----------------- |
-| POST   | `/auth/register` | User Registration |
-| POST   | `/auth/login`    | User Login        |
+| Method | Endpoint                     | Description                            |
+| ------ | ---------------------------- | -------------------------------------- |
+| POST   | `/auth/register`             | User Registration                      |
+| POST   | `/auth/login`                | User Login with Rate Limit             |
+| POST   | `/auth/login-session`        | User Login with Session and Rate Limit |
+| GET    | `/auth/verify-email/:token`  | Email Verification                     |
+| POST   | `/auth/refreshToken`         | Refresh Token Handler                  |
+| POST   | `/auth/logout-session`       | User Logout with Session               |
+| POST   | `/auth/request-password-reset` | Request Password Reset               |
+| POST   | `/auth/reset-password/:resetToken` | Reset Password using Token         |
+| GET    | `/auth/rate-limit-data`      | Fetch rate-limit data for users        |
+| POST   | `/auth/rate-limit-reset/:key`| Reset rate limit for a specific key    |
+| POST   | `/auth/rate-limit-reset-all` | Reset rate limits for all users        |
+| GET    | `/auth/cache-data`           | Get cache data                         |
+| GET    | `/auth/google`               | Google OAuth authentication route      |
+| GET    | `/auth/google/callback`      | Callback for Google OAuth              |
+
 
 ### **Admin Endpoints**
 

@@ -26,7 +26,6 @@
     "jsonwebtoken": "^9.0.1",
     "memory-cache": "^0.2.0",
     "mongoose": "^7.4.5",
-    "node-cache": "^5.1.2",
     "nodemailer": "^6.9.6",
     "passport": "^0.6.0",
     "passport-google-oauth20": "^2.0.0",
