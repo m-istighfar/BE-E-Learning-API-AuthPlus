@@ -32,7 +32,7 @@ const requestPasswordReset = async (req, res) => {
     from: "daiqijb105@gmail.com",
     to: user.email,
     subject: "Password Reset Request",
-    text: `Please click on the following link, or paste this into your browser to complete the process within one hour:\n\nhttp://localhost:3000/reset-password/${resetToken}\n\n If you did not request this, please ignore this email and your password will remain unchanged.\n`,
+    text: `Please click on the following link, or paste this into your browser to complete the process within one hour:\n\nhttp://localhost:3000/auth/reset-password/${resetToken}\n\n If you did not request this, please ignore this email and your password will remain unchanged.\n`,
   };
 
   transporter.sendMail(mailOptions, (err) => {

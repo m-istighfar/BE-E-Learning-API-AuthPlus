@@ -29,6 +29,7 @@ router.post("/login", userLoginLimiter, AuthController.login);
 router.post("/login-session", userLoginLimiter, AuthController.loginWihSession);
 
 router.post("/register", AuthController.register);
+router.get("/verify-email/:token", AuthController.verifyEmail);
 router.post("/refreshToken", AuthController.refreshTokenHandler);
 
 router.post("/logout-session", AuthController.logoutWithSession);

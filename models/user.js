@@ -7,6 +7,8 @@ const UserSchema = new mongoose.Schema({
   role: { type: String, required: true, enum: ["admin", "author", "student"] },
   resetPasswordToken: String,
   resetPasswordExpires: Date,
+  verified: { type: Boolean, default: false },
+  verificationToken: String,
 });
 
 module.exports = mongoose.model("User", UserSchema);

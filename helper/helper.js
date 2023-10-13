@@ -19,6 +19,7 @@ async function generateFakeUsers(count) {
       email: faker.internet.email(),
       password: hashedPassword,
       role: faker.random.arrayElement(["author", "student"]),
+      verified: true,
     };
     fakeUsers.push(fakeUser);
   }
@@ -31,6 +32,7 @@ async function generateFakeUsers(count) {
     email: "admin@example.com",
     password: hashedAdminPassword,
     role: "admin",
+    verified: true,
   };
   fakeUsers.push(adminUser);
 
